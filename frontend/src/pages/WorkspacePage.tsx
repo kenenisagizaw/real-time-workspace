@@ -1,11 +1,11 @@
-import { useEffect, useState, useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import type { Channel } from "../api";
 import { createChannel, getChannels } from "../api";
-import { SocketContext } from "../context/SocketContext";
 import ChannelList from "../components/channel/ChannelList";
 import Chat from "../components/channel/Chat";
 import { useAuth } from "../context/AuthContext";
+import { SocketContext } from "../context/SocketContext";
 
 const WorkspacePage = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
