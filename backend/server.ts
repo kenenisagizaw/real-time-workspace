@@ -1,23 +1,51 @@
-import { createServer } from 'http';
-import { Server as SocketIOServer } from 'socket.io';
-import app from './app';
-import authRoutes from './routes/authRoutes';
-import workspaceRoutes from './routes/workspaceRoutes';
-import channelRoutes from './routes/channelRoutes';
-import { chatSocket } from './sockets/chatSocket';
+import { createServer } from "http";
+import { Server } from "socket.io";
+import app from "./app";
+import { prisma } from "./config/prisma";
+
+const server = createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:5173",
+    credentials: true,
+  },
+});
+
+io.on("connection", (socket) => {
+  console.log("New client connected", socket.id);
+
+  socket.on("joinChannel", (channelId: number) => {
+    socket.join(`channel_${channelId}`);
+  });
+
+  socket.on("sendMessage", async ({ channelId, content }) => {
+    const message = await prisma.message.create({
+      data: {
+        content,
+        channelId,
+        senderId: 1,
+      },
+      include: { sender: true },
+    });
+
+    const outgoing = {
+      id: message.id,
+      content: message.content,
+      userName: message.sender.name,
+    };
+
+    io.to(`channel_${channelId}`).emit("receiveMessage", outgoing);
+  });
+
+  socket.on("channelCreated", (channel) => {
+    io.to(`workspace_${channel.workspaceId}`).emit("channelCreated", channel);
+  });
+
+  socket.on("disconnect", () => {
+    console.log("Client disconnected", socket.id);
+  });
+});
 
 const PORT = process.env.PORT || 5000;
-
-app.use('/api/auth', authRoutes);
-app.use('/api/workspaces', workspaceRoutes);
-app.use('/api/channels', channelRoutes);
-
-const httpServer = createServer(app);
-const io = new SocketIOServer(httpServer, { cors: { origin: "*", methods: ["GET","POST"] } });
-
-// Socket.io chat events
-chatSocket(io);
-
-httpServer.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
