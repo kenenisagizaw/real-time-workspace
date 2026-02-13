@@ -1,84 +1,80 @@
-import React, { useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import { useEffect, useState } from "react";
+import { useSocket } from "../../context/SocketContext";
 import api from "../../api/axios";
 
 interface Message {
   id: number;
   content: string;
-  sender: { name: string };
-  createdAt: string;
+  userName: string;
 }
 
-interface ChatProps {
+interface Props {
   channelId: number;
-  socket: Socket | null;
 }
 
-const Chat: React.FC<ChatProps> = ({ channelId, socket }) => {
+const Chat: React.FC<Props> = ({ channelId }) => {
+  const socket = useSocket();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
+  const [newMessage, setNewMessage] = useState("");
 
-  // Fetch channel messages from backend (optional if backend stores)
+  // Fetch existing messages
   useEffect(() => {
     const fetchMessages = async () => {
-      try {
-        const { data } = await api.get(`/channels/${channelId}/messages`);
-        setMessages(data);
-      } catch (err) {
-        console.error(err);
-      }
+      const { data } = await api.get(`/channels/${channelId}/messages`);
+      setMessages(data);
     };
-
     fetchMessages();
   }, [channelId]);
 
-  // Listen for real-time messages
+  // Listen for incoming messages
   useEffect(() => {
     if (!socket) return;
 
-    socket.emit("joinChannel", channelId);
-
-    socket.on("receiveMessage", (msg: Message) => {
+    const handleReceive = (msg: Message) => {
       setMessages((prev) => [...prev, msg]);
-    });
+    };
+
+    socket.on("receiveMessage", handleReceive);
 
     return () => {
-      socket.off("receiveMessage");
+      socket.off("receiveMessage", handleReceive);
     };
-  }, [channelId, socket]);
+  }, [socket]);
 
+  // Send a message
   const sendMessage = () => {
-    if (!message.trim() || !socket) return;
-    socket.emit("sendMessage", { channelId, content: message });
-    setMessage("");
-  };
+    if (!newMessage.trim() || !socket) return;
 
-  const handleEnter = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") sendMessage();
+    socket.emit("sendMessage", { channelId, content: newMessage });
+    setNewMessage("");
   };
 
   return (
-    <div className="flex-1 flex flex-col p-4">
-      <div className="flex-1 overflow-y-auto mb-4">
+    <div className="flex-1 flex flex-col border-l">
+      <div className="flex-1 p-4 overflow-y-auto space-y-2">
+        {messages.length === 0 && (
+          <div className="text-gray-400">No messages yet. Start the conversation!</div>
+        )}
         {messages.map((msg) => (
-          <div key={msg.id} className="mb-2">
-            <span className="font-bold">{msg.sender.name}: </span>
-            <span>{msg.content}</span>
+          <div key={msg.id}>
+            <span className="font-bold">{msg.userName}: </span>
+            {msg.content}
           </div>
         ))}
       </div>
-      <div className="flex">
+
+      <div className="p-2 border-t flex">
         <input
+          className="flex-1 p-2 border rounded mr-2"
           type="text"
+          value={newMessage}
           placeholder="Type a message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleEnter}
-          className="flex-1 border rounded p-2 mr-2"
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
         <button
           onClick={sendMessage}
-          className="bg-blue-500 text-white px-4 rounded"
+          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition"
         >
           Send
         </button>
