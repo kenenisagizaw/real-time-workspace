@@ -1,15 +1,18 @@
-import express, { Application } from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv';
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import authRoutes from "./routes/authRoutes";
+import workspaceRoutes from "./routes/workspaceRoutes";
+import channelRoutes from "./routes/channelRoutes";
 
-dotenv.config();
+const app = express();
 
-const app: Application = express();
-
-app.use(cors());
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(express.json());
 
-// Routes placeholder
-app.get('/', (_, res) => res.send('API running...'));
+// API routes
+app.use("/api/auth", authRoutes);
+app.use("/api/workspaces", workspaceRoutes);
+app.use("/api/channels", channelRoutes);
 
 export default app;
