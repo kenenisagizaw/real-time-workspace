@@ -22,6 +22,12 @@ export interface WorkspaceMember {
   workspace: Workspace;
 }
 
+export interface WorkspaceSummary {
+  id: number;
+  name: string;
+  isMember: boolean;
+}
+
 export interface Channel {
   id: number;
   name: string;
@@ -51,7 +57,7 @@ export const loginUser = async (payload: {
 };
 
 export const getWorkspaces = async (token: string) => {
-  const { data } = await api.get<WorkspaceMember[]>(
+  const { data } = await api.get<WorkspaceSummary[]>(
     "/workspaces",
     authHeaders(token)
   );
