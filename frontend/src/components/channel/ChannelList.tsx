@@ -1,64 +1,33 @@
-import { useState } from "react";
-import type { Channel } from "../../api";
-import Button from "../common/Button";
-import Input from "../common/Input";
+import React from "react";
 
-interface ChannelListProps {
-  channels: Channel[];
-  onCreate?: (name: string) => Promise<void>;
-  loading?: boolean;
-  selectedChannelId?: number | null;
-  onSelectChannel?: (channel: Channel) => void;
+interface Channel {
+  id: number;
+  name: string;
 }
 
-const ChannelList = ({
-  channels,
-  onCreate,
-  loading,
-  selectedChannelId,
-  onSelectChannel,
-}: ChannelListProps) => {
-  const [name, setName] = useState("");
+interface Props {
+  channels: Channel[];
+  selectedChannel: Channel | null;
+  onSelect: (channel: Channel) => void;
+  workspaceId?: string;
+}
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!onCreate || !name.trim()) return;
-    await onCreate(name);
-    setName("");
-  };
-
+const ChannelList: React.FC<Props> = ({ channels, selectedChannel, onSelect }) => {
   return (
-    <>
-      <div className="list">
-        {channels.length === 0 && <p className="muted">No channels yet.</p>}
-        {channels.map((channel) => (
-          <button
-            key={channel.id}
-            type="button"
-            className={
-              channel.id === selectedChannelId
-                ? "list-item active"
-                : "list-item"
-            }
-            onClick={() => onSelectChannel?.(channel)}
-          >
-            <span># {channel.name}</span>
-          </button>
-        ))}
-      </div>
-      {onCreate && (
-        <form className="inline-form" onSubmit={handleSubmit}>
-          <Input
-            placeholder="New channel"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-          />
-          <Button type="submit" disabled={loading}>
-            Add
-          </Button>
-        </form>
-      )}
-    </>
+    <div className="w-64 bg-gray-100 border-r p-2 overflow-y-auto">
+      <h2 className="font-bold mb-2">Channels</h2>
+      {channels.map((channel) => (
+        <div
+          key={channel.id}
+          onClick={() => onSelect(channel)}
+          className={`p-2 rounded cursor-pointer ${
+            selectedChannel?.id === channel.id ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+          }`}
+        >
+          # {channel.name}
+        </div>
+      ))}
+    </div>
   );
 };
 
