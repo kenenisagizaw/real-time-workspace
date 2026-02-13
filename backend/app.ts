@@ -1,9 +1,9 @@
+import cors from "cors";
 import "dotenv/config";
 import express from "express";
-import cors from "cors";
 import authRoutes from "./routes/authRoutes";
-import workspaceRoutes from "./routes/workspaceRoutes";
 import channelRoutes from "./routes/channelRoutes";
+import workspaceRoutes from "./routes/workspaceRoutes";
 
 const app = express();
 
