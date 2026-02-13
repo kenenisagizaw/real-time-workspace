@@ -2,6 +2,19 @@
 @import "tailwindcss";
 
 @layer base {
+  :root {
+    --accent: #f8ae5d;
+    --text-primary: #1f2937;
+    --muted-text: #6b7280;
+    --surface: #ffffff;
+    --surface-glass: #f3f4f6;
+    --stroke: rgba(17, 24, 39, 0.12);
+    --warning-bg: rgba(192, 74, 74, 0.12);
+    --warning-border: rgba(192, 74, 74, 0.4);
+    --warning-text: #b91c1c;
+    --shadow-soft: 0 24px 50px rgba(15, 23, 42, 0.12);
+  }
+
   html,
   body,
   #root {
