@@ -1,27 +1,27 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import api from "../api/axios";
+import type { Channel } from "../api";
+import { getChannels } from "../api";
 import ChannelList from "../components/channel/ChannelList";
 import Chat from "../components/channel/Chat";
+import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
-interface Channel {
-  id: number;
-  name: string;
-}
 
 const WorkspacePage = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const socket = useSocket();
+  const { token } = useAuth();
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const numericWorkspaceId = workspaceId ? Number(workspaceId) : null;
 
   // Fetch channels for this workspace
   useEffect(() => {
     const fetchChannels = async () => {
-      if (!workspaceId) return;
+      if (!token || !numericWorkspaceId) return;
       try {
-        const { data } = await api.get(`/workspaces/${workspaceId}/channels`);
+        const data = await getChannels(token, numericWorkspaceId);
         setChannels(data);
 
         // Auto-select first channel if none selected
@@ -33,11 +33,11 @@ const WorkspacePage = () => {
       }
     };
     fetchChannels();
-  }, [workspaceId]);
+  }, [numericWorkspaceId, token, selectedChannel]);
 
   // Listen for new channels created in this workspace
   useEffect(() => {
-    if (!socket || !workspaceId) return;
+    if (!socket || !numericWorkspaceId) return;
 
     socket.on("channelCreated", (channel: Channel) => {
       setChannels((prev) => [...prev, channel]);
@@ -50,14 +50,14 @@ const WorkspacePage = () => {
     };
   }, [socket, workspaceId]);
 
-  if (!workspaceId) return <div>Workspace not found</div>;
+  if (!numericWorkspaceId) return <div>Workspace not found</div>;
 
   return (
     <div className="flex h-screen">
       <ChannelList
         channels={channels}
         selectedChannel={selectedChannel}
-        onSelect={setSelectedChannel}
+        onSelect={(channel: Channel) => setSelectedChannel(channel)}
         workspaceId={workspaceId}
       />
       {selectedChannel ? (
